@@ -3,11 +3,27 @@ name = "streamlit-persist-session"
 version = "0.1.0"
 description = "Persistent data across page reloads for Streamlit applications"
 readme = "README.md"
+authors = [
+    { name = "hrkn", email = "3927357+hrkn@users.noreply.github.com" }
+]
+license = "MIT"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+]
+keywords = ["streamlit", "cookie", "persistence", "session-state", "decorator"]
 requires-python = ">=3.13"
 dependencies = [
     "streamlit>=1.58.0",
     "streamlit-cookies-controller>=0.0.4",
 ]
+
+[project.urls]
+Homepage = "https://github.com/hrkn/streamlit-persist-session"
+Repository = "https://github.com/hrkn/streamlit-persist-session"
+Issues = "https://github.com/hrkn/streamlit-persist-session/issues"
 
 [dependency-groups]
 dev = [
