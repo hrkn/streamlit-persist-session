@@ -2,6 +2,9 @@
 
 A Python library/utility designed for **Persistent data across page reloads** in Streamlit applications using cryptographically signed browser cookies and local state files.
 
+### Demo
+A live demo application is available at: [https://persist-session.streamlit.app/](https://persist-session.streamlit.app/)
+
 ## Purpose
 
 The primary goal of `streamlit-persist-session` is to provide **Persistent data across page reloads**.
@@ -81,6 +84,8 @@ uv run streamlit run main.py
 ```
 
 If the browser does not open automatically, visit the URL output in your terminal (usually `http://localhost:8501`).
+
+Alternatively, you can try the hosted version at [https://persist-session.streamlit.app/](https://persist-session.streamlit.app/).
 
 ## How It Works
 
