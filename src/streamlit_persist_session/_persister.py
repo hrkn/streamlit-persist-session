@@ -177,6 +177,17 @@ def persist(cookie_key: str):
                                     _set_unpickling_flag(False)
 
                                 if isinstance(loaded_instance, cls_):
+                                    # Ensure persistent attributes are restored on the loaded instance
+                                    # in case they were stripped during pickling/unpickling.
+                                    try:
+                                        loaded_instance._cookie_uuid = uid
+                                        loaded_instance._cookie_key = cookie_key
+                                        loaded_instance._controller_key = controller_key
+                                        loaded_instance._is_temp_placeholder = False
+                                    except Exception as attr_err:
+                                        LOGGER.warning(
+                                            f"Failed to restore persistent attributes on loaded instance: {attr_err}"
+                                        )
                                     valid_session = True
                                     LOGGER.info(
                                         f"Successfully loaded persisted instance: {uid}"
@@ -249,12 +260,16 @@ def persist(cookie_key: str):
         def _save_to_file(self):
             if getattr(self, "_is_temp_placeholder", False):
                 return
+            cookie_uuid = getattr(self, "_cookie_uuid", None)
+            if not cookie_uuid:
+                LOGGER.warning("Cannot save to file: '_cookie_uuid' attribute is missing.")
+                return
             try:
                 temp_dir = tempfile.gettempdir()
-                file_path = os.path.join(temp_dir, self._cookie_uuid)
+                file_path = os.path.join(temp_dir, cookie_uuid)
                 with open(file_path, "wb") as f:
                     pickle.dump(self, f)
-                LOGGER.debug(f"Saved state to file: {self._cookie_uuid}")
+                LOGGER.debug(f"Saved state to file: {cookie_uuid}")
             except Exception as e:
                 LOGGER.error(f"Failed to save state to file: {e}")
 
@@ -282,28 +297,38 @@ def persist(cookie_key: str):
 
         def clear_cookie_state(self):
             """Remove the persistent cookie, delete the temp file, and clear the session state cache."""
+            if getattr(self, "_is_temp_placeholder", False):
+                LOGGER.debug("Cannot clear cookie state: instance is a temporary placeholder.")
+                return
+
             LOGGER.info("Clearing cookie state and temporary file.")
 
             # 1. Remove cookie from browser
-            try:
-                controller = CookieController(key=self._controller_key)
-                controller.remove(self._cookie_key)
-            except Exception as e:
-                LOGGER.warning(f"Failed to remove cookie: {e}")
+            controller_key = getattr(self, "_controller_key", None)
+            cookie_key = getattr(self, "_cookie_key", None)
+            if controller_key and cookie_key:
+                try:
+                    controller = CookieController(key=controller_key)
+                    controller.remove(cookie_key)
+                except Exception as e:
+                    LOGGER.warning(f"Failed to remove cookie: {e}")
 
             # 2. Delete the state file from temp directory
-            temp_dir = tempfile.gettempdir()
-            file_path = os.path.join(temp_dir, self._cookie_uuid)
-            if os.path.exists(file_path):
-                try:
-                    os.remove(file_path)
-                except Exception as e:
-                    LOGGER.warning(f"Failed to delete file {file_path}: {e}")
+            cookie_uuid = getattr(self, "_cookie_uuid", None)
+            if cookie_uuid:
+                temp_dir = tempfile.gettempdir()
+                file_path = os.path.join(temp_dir, cookie_uuid)
+                if os.path.exists(file_path):
+                    try:
+                        os.remove(file_path)
+                    except Exception as e:
+                        LOGGER.warning(f"Failed to delete file {file_path}: {e}")
 
             # 3. Clear session state cache
-            state_key = f"_cookie_persisted_{self._cookie_key}"
-            if state_key in st.session_state:
-                del st.session_state[state_key]
+            if cookie_key:
+                state_key = f"_cookie_persisted_{cookie_key}"
+                if state_key in st.session_state:
+                    del st.session_state[state_key]
 
         # Override/attach methods in-place
         cls.__new__ = staticmethod(custom_new)

@@ -1,6 +1,6 @@
 [project]
 name = "streamlit-persist-session"
-version = "0.1.0"
+version = "0.1.1"
 description = "Persistent data across page reloads for Streamlit applications"
 readme = "README.md"
 authors = [
